@@ -1,5 +1,7 @@
 #include "settings.h"
 #include <Sodaq_RN2483.h>
+#include <Wire.h>
+#include <Sodaq_SHT2x.h>
 #include <ArduinoJson.h>
 
 #define debugSerial SerialUSB
@@ -18,8 +20,8 @@ char PayloadToSend[20];
 
 void setup()
 {
+  Wire.begin();
   delay(1000);
-  
   while ((!debugSerial) && (millis() < 10000)){
   // Wait 10 seconds for debugSerial to open
 }
@@ -86,7 +88,7 @@ void setupLoRaOTAA(){
 }
 
 void loop()
-{ 
+{
    //StaticJsonBuffer<148> jsonBuffer;
    DynamicJsonBuffer  jsonBuffer(200);
    JsonObject& json = jsonBuffer.createObject();
@@ -97,8 +99,18 @@ void loop()
    int analog_value = analogRead(A0);
    debugSerial.println(analog_value);
 
-   json["temp"] = reading;
-   json["conduct"] = analog_value;
+   json["temp_in"] = reading;
+
+   // If SHT21 is connected we'll send those readings too
+   float temp_out = SHT2x.GetTemperature();
+   if (temp_out > -273) {
+     json["temp_out"] = temp_out;
+   }
+   float humi = SHT2x.GetHumidity();
+   if (humi > 0) {
+     json["humi"] = humi;
+   }
+   //json["conduct"] = analog_value;
 /*
    size_t printTo(char* buffer, size_t size) const;
    size_t printTo(char buffer[size]) const;
