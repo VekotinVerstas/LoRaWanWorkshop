@@ -2,6 +2,7 @@
 #include <Sodaq_RN2483.h>
 #include <Wire.h>
 #include <Sodaq_SHT2x.h>
+#include <BH1750.h>
 #include <ArduinoJson.h>
 
 #define debugSerial SerialUSB
@@ -18,9 +19,13 @@ char TempLabel[3]="T:";
 char ConductivityLabel[3]="C:";
 char PayloadToSend[20];
 
+BH1750 lightMeter;
+
+
 void setup()
 {
   Wire.begin();
+  lightMeter.begin();
   delay(1000);
   while ((!debugSerial) && (millis() < 10000)){
   // Wait 10 seconds for debugSerial to open
@@ -110,6 +115,13 @@ void loop()
    if (humi > 0) {
      json["humi"] = humi;
    }
+
+   uint16_t lux = lightMeter.readLightLevel();
+   if (lux < 54612) {
+      json["lux"] = lux;
+   }
+   // debugSerial.println(lux);
+   
    //json["conduct"] = analog_value;
 /*
    size_t printTo(char* buffer, size_t size) const;
